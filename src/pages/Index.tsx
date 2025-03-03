@@ -3,17 +3,28 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
 import FeaturedNews from '@/components/FeaturedNews';
-import CategoryGrid from '@/components/CategoryGrid';
+import HorizontalCategories from '@/components/HorizontalCategories';
 import NewsList from '@/components/NewsList';
 import NewsCard from '@/components/NewsCard';
 import { newsData, trendingNews } from '@/data/newsData';
 import { categories } from '@/data/categoryData';
+import { Calendar } from 'lucide-react';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
+  const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
+    // Get current date in Vietnamese format
+    const days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+    const now = new Date();
+    const day = days[now.getDay()];
+    const date = now.getDate();
+    const month = now.getMonth() + 1;
+    const year = now.getFullYear();
+    setCurrentDate(`${day}, ${date} tháng ${month}, ${year}`);
+
     // Simulate loading time for resources
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -47,20 +58,28 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-newsapp-background pb-20">
-      <Header />
+      {/* New header with gradient background */}
+      <div className="bg-gradient-to-r from-newsapp-teal to-blue-500 text-white">
+        <Header transparent={true} />
+        
+        {/* Date display */}
+        <div className="container mx-auto px-4 pb-2">
+          <div className="date-display">
+            <Calendar className="h-4 w-4" />
+            <span>{currentDate}</span>
+          </div>
+        </div>
+        
+        {/* Categories */}
+        <div className="container mx-auto px-4 pb-4">
+          <HorizontalCategories categories={categories} />
+        </div>
+      </div>
       
       <main className="container mx-auto px-4 pt-4 animate-fade-in">
         {/* Featured News Carousel */}
         <section className="mb-8">
           <FeaturedNews items={newsData.slice(0, 5)} />
-        </section>
-        
-        {/* Categories */}
-        <section className="mb-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold">Chuyên mục</h2>
-          </div>
-          <CategoryGrid categories={categories} />
         </section>
         
         {/* Latest News */}

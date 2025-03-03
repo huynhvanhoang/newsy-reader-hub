@@ -45,12 +45,14 @@ const Header = ({
     <header className={`sticky top-0 z-40 transition-all duration-300 ${getHeaderClasses()}`}>
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="bg-newsapp-teal text-white font-bold rounded-lg p-2 flex items-center justify-center transform transition-transform hover:scale-105">
-              <span className="text-xl">24h</span>
-            </div>
-            {!title && <span className="font-bold text-xl text-newsapp-text">Đọc báo 24h</span>}
-          </Link>
+          {!transparent && (
+            <Link to="/" className="flex items-center gap-2">
+              <div className="bg-newsapp-teal text-white font-bold rounded-lg p-2 flex items-center justify-center transform transition-transform hover:scale-105">
+                <span className="text-xl">24h</span>
+              </div>
+              {!title && <span className="font-bold text-xl text-newsapp-text">Đọc báo 24h</span>}
+            </Link>
+          )}
           {title && <h1 className="text-lg font-semibold text-newsapp-text">{title}</h1>}
         </div>
         
@@ -58,16 +60,16 @@ const Header = ({
           {showSearch && (
             <Link
               to="/search"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200"
+              className={`flex h-10 w-10 items-center justify-center rounded-full ${transparent ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'} transition-colors hover:bg-opacity-30`}
             >
               <Search className="h-5 w-5" />
             </Link>
           )}
           
           {showNotification && (
-            <button className="relative flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200">
+            <button className={`relative flex h-10 w-10 items-center justify-center rounded-full ${transparent ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'} transition-colors hover:bg-opacity-30`}>
               <BellRing className="h-5 w-5" />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-newsapp-teal"></span>
+              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-newsapp-yellow"></span>
             </button>
           )}
         </div>
