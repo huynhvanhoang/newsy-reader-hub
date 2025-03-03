@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
@@ -60,7 +61,7 @@ const Index = () => {
       <div className="bg-gradient-to-r from-newsapp-teal to-blue-500 pb-2">
         <Header transparent={true} />
         
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 mt-8">
           <HorizontalCategories categories={categories} />
         </div>
         
@@ -75,7 +76,7 @@ const Index = () => {
       <main className="container mx-auto px-4 pt-4 animate-fade-in">
         <div className="mb-6 overflow-x-auto scrollbar-hide">
           <div className="flex gap-2 py-1">
-            {['# Mỹ - Trung', '# AI - Trí tuệ nhân tạo', '# Lễ hội xuân 2025', '# Kinh tế'].map((topic, index) => (
+            {['# Mỹ - Trung', '# AI - Trí tuệ nhân tạo', '# Lễ hội xuân 2025', '# Kinh tế', '# Thể thao', '# Giải trí', '# Du lịch'].map((topic, index) => (
               <div key={index} className="flex-shrink-0 rounded-full bg-gray-100 px-4 py-2 text-sm">
                 {topic}
               </div>

@@ -65,7 +65,7 @@ const Navbar = () => {
       <div className={`hidden md:block fixed top-0 left-0 right-0 transition-all duration-300 z-50 ${
         scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm' : 'bg-white'
       }`}>
-        <div className="container mx-auto flex h-16 items-center justify-between">
+        <div className="container mx-auto flex h-14 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <div className="bg-newsapp-teal text-white font-bold rounded-lg p-2 flex items-center justify-center transform transition-transform hover:scale-105">
               <span className="text-xl">24h</span>
@@ -92,12 +92,12 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu button */}
+      {/* Mobile menu button - positioned at left side of the header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed right-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-newsapp-teal text-white shadow-lg md:hidden transform transition hover:scale-105 active:scale-95"
+        className="fixed left-4 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-newsapp-teal text-white shadow-md md:hidden transform transition hover:scale-105 active:scale-95"
       >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </button>
 
       {/* Mobile menu panel */}

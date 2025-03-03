@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Search, Menu, User } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -44,12 +44,10 @@ const Header = ({
   return (
     <header className={`sticky top-0 z-40 transition-all duration-300 ${getHeaderClasses()}`}>
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Left side - Menu button */}
+        <div className="flex h-12 items-center justify-between">
+          {/* Left empty space for symmetry */}
           <div className="flex items-center">
-            <button className={`flex h-10 w-10 items-center justify-center rounded-full ${transparent ? 'text-white' : 'text-gray-600'}`}>
-              <Menu className="h-6 w-6" />
-            </button>
+            {/* Menu button removed from here */}
           </div>
           
           {/* Right side - Search and profile */}
@@ -57,14 +55,14 @@ const Header = ({
             {showSearch && (
               <Link
                 to="/search"
-                className={`flex h-10 w-10 items-center justify-center rounded-full ${transparent ? 'text-white' : 'text-gray-600'}`}
+                className={`flex h-8 w-8 items-center justify-center rounded-full ${transparent ? 'text-white' : 'text-gray-600'}`}
               >
-                <Search className="h-6 w-6" />
+                <Search className="h-5 w-5" />
               </Link>
             )}
             
             {showNotification && (
-              <div className={`h-10 w-10 rounded-full bg-gray-200 ${transparent ? 'bg-white/20' : ''}`}>
+              <div className={`h-8 w-8 rounded-full bg-gray-200 ${transparent ? 'bg-white/20' : ''}`}>
                 <img 
                   src="/lovable-uploads/60eb9a88-12fc-44e3-a5e5-bcf9bc48f819.png" 
                   alt="Profile" 
