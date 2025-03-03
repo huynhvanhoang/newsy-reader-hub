@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
@@ -23,7 +22,7 @@ const Index = () => {
     const date = now.getDate();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
-    setCurrentDate(`${day}, ${date} tháng ${month}, ${year}`);
+    setCurrentDate(`T${day === 'Chủ nhật' ? '7' : day.split(' ')[1]}, ${date} tháng ${month}, ${year}`);
 
     // Simulate loading time for resources
     const timer = setTimeout(() => {
@@ -58,31 +57,36 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-newsapp-background pb-20">
-      {/* New header with gradient background */}
-      <div className="bg-gradient-to-r from-newsapp-teal to-blue-500 text-white">
+      <div className="bg-gradient-to-r from-newsapp-teal to-blue-500 pb-2">
         <Header transparent={true} />
         
-        {/* Date display */}
-        <div className="container mx-auto px-4 pb-2">
-          <div className="date-display">
+        <div className="container mx-auto px-4">
+          <HorizontalCategories categories={categories} />
+        </div>
+        
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center gap-2 text-white/90 text-sm">
             <Calendar className="h-4 w-4" />
             <span>{currentDate}</span>
           </div>
         </div>
-        
-        {/* Categories */}
-        <div className="container mx-auto px-4 pb-4">
-          <HorizontalCategories categories={categories} />
-        </div>
       </div>
       
       <main className="container mx-auto px-4 pt-4 animate-fade-in">
-        {/* Featured News Carousel */}
+        <div className="mb-6 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 py-1">
+            {['# Mỹ - Trung', '# AI - Trí tuệ nhân tạo', '# Lễ hội xuân 2025', '# Kinh tế'].map((topic, index) => (
+              <div key={index} className="flex-shrink-0 rounded-full bg-gray-100 px-4 py-2 text-sm">
+                {topic}
+              </div>
+            ))}
+          </div>
+        </div>
+        
         <section className="mb-8">
           <FeaturedNews items={newsData.slice(0, 5)} />
         </section>
         
-        {/* Latest News */}
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-bold">Tin mới nhất</h2>
@@ -99,7 +103,6 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Trending News */}
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-bold">Đang được quan tâm</h2>

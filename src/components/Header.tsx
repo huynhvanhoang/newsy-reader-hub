@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Search, BellRing } from 'lucide-react';
+import { Search, Menu, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -43,35 +43,36 @@ const Header = ({
   
   return (
     <header className={`sticky top-0 z-40 transition-all duration-300 ${getHeaderClasses()}`}>
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-4">
-          {!transparent && (
-            <Link to="/" className="flex items-center gap-2">
-              <div className="bg-newsapp-teal text-white font-bold rounded-lg p-2 flex items-center justify-center transform transition-transform hover:scale-105">
-                <span className="text-xl">24h</span>
-              </div>
-              {!title && <span className="font-bold text-xl text-newsapp-text">Đọc báo 24h</span>}
-            </Link>
-          )}
-          {title && <h1 className="text-lg font-semibold text-newsapp-text">{title}</h1>}
-        </div>
-        
-        <div className="flex items-center gap-4">
-          {showSearch && (
-            <Link
-              to="/search"
-              className={`flex h-10 w-10 items-center justify-center rounded-full ${transparent ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'} transition-colors hover:bg-opacity-30`}
-            >
-              <Search className="h-5 w-5" />
-            </Link>
-          )}
-          
-          {showNotification && (
-            <button className={`relative flex h-10 w-10 items-center justify-center rounded-full ${transparent ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'} transition-colors hover:bg-opacity-30`}>
-              <BellRing className="h-5 w-5" />
-              <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-newsapp-yellow"></span>
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          {/* Left side - Menu button */}
+          <div className="flex items-center">
+            <button className={`flex h-10 w-10 items-center justify-center rounded-full ${transparent ? 'text-white' : 'text-gray-600'}`}>
+              <Menu className="h-6 w-6" />
             </button>
-          )}
+          </div>
+          
+          {/* Right side - Search and profile */}
+          <div className="flex items-center gap-3">
+            {showSearch && (
+              <Link
+                to="/search"
+                className={`flex h-10 w-10 items-center justify-center rounded-full ${transparent ? 'text-white' : 'text-gray-600'}`}
+              >
+                <Search className="h-6 w-6" />
+              </Link>
+            )}
+            
+            {showNotification && (
+              <div className={`h-10 w-10 rounded-full bg-gray-200 ${transparent ? 'bg-white/20' : ''}`}>
+                <img 
+                  src="/lovable-uploads/60eb9a88-12fc-44e3-a5e5-bcf9bc48f819.png" 
+                  alt="Profile" 
+                  className="h-full w-full rounded-full object-cover"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
