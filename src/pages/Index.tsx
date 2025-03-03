@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import FeaturedNews from '@/components/FeaturedNews';
 import CategoryGrid from '@/components/CategoryGrid';
 import NewsList from '@/components/NewsList';
+import NewsCard from '@/components/NewsCard';
 import { newsData, trendingNews } from '@/data/newsData';
 import { categories } from '@/data/categoryData';
 
