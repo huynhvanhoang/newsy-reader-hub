@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, BellRing } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
   title?: string;
@@ -17,6 +17,7 @@ const Header = ({
   transparent = false
 }: HeaderProps) => {
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const handleScroll = () => {
