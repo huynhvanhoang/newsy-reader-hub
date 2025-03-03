@@ -10,6 +10,47 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const UtilitiesPage = () => {
   const [activeTab, setActiveTab] = useState("weather");
   
+  // Sample weather data
+  const weatherData = {
+    location: "Hà Nội",
+    currentTemp: 28,
+    condition: "sunny" as const,
+    lowTemp: 25,
+    highTemp: 32
+  };
+  
+  // Sample exchange rates data
+  const exchangeRates = [
+    {
+      currency: "Đô la Mỹ",
+      code: "USD",
+      buyRate: "24,450",
+      sellRate: "24,820",
+      change: "up" as const
+    },
+    {
+      currency: "Euro",
+      code: "EUR",
+      buyRate: "26,332",
+      sellRate: "27,736",
+      change: "down" as const
+    },
+    {
+      currency: "Yên Nhật",
+      code: "JPY",
+      buyRate: "161.79",
+      sellRate: "171.21",
+      change: "stable" as const
+    }
+  ];
+  
+  // Sample lottery data
+  const lotteryData = {
+    title: "Xổ số kiến thiết hôm nay",
+    image: "https://placehold.co/800x400/teal/white?text=Xổ+Số+Hôm+Nay",
+    action: "Xem kết quả"
+  };
+  
   return (
     <div className="min-h-screen bg-newsapp-background pb-20">
       <Header title="Tiện ích" />
@@ -24,15 +65,15 @@ const UtilitiesPage = () => {
             </TabsList>
             
             <TabsContent value="weather" className="animate-fade-up">
-              <WeatherWidget />
+              <WeatherWidget data={weatherData} />
             </TabsContent>
             
             <TabsContent value="exchange" className="animate-fade-up">
-              <ExchangeRatesWidget />
+              <ExchangeRatesWidget rates={exchangeRates} lastUpdated="22/08/2023 15:30" />
             </TabsContent>
             
             <TabsContent value="lottery" className="animate-fade-up">
-              <LotteryWidget />
+              <LotteryWidget title={lotteryData.title} image={lotteryData.image} action={lotteryData.action} />
             </TabsContent>
           </Tabs>
         </div>
