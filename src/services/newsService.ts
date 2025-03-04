@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { NewsItem } from '@/components/NewsCard';
 
@@ -160,17 +159,17 @@ export const fetchNewsByCategory = async (categoryId: number, limit: number = 10
   }
 };
 
-// Fetch news by hashtag
+// Fetch news by hashtag - improved with better error handling
 export const fetchNewsByHashtag = async (hashtagSlug: string, limit: number = 10): Promise<NewsItem[]> => {
   try {
     // First get the hashtag id
     const { data: hashtagData, error: hashtagError } = await supabase
       .from('hashtags')
       .select('id')
-      .eq('slug', hashtagSlug)
-      .single();
+      .ilike('slug', `%${hashtagSlug}%`) // More flexible search with ILIKE
+      .limit(1);
     
-    if (hashtagError || !hashtagData) {
+    if (hashtagError || !hashtagData || hashtagData.length === 0) {
       console.error('Error fetching hashtag:', hashtagError);
       return [];
     }
@@ -179,9 +178,9 @@ export const fetchNewsByHashtag = async (hashtagSlug: string, limit: number = 10
     const { data: articleHashtags, error: articleHashtagsError } = await supabase
       .from('article_hashtags')
       .select('article_id')
-      .eq('hashtag_id', hashtagData.id);
+      .eq('hashtag_id', hashtagData[0].id);
     
-    if (articleHashtagsError || !articleHashtags.length) {
+    if (articleHashtagsError || !articleHashtags || articleHashtags.length === 0) {
       console.error('Error fetching article hashtags:', articleHashtagsError);
       return [];
     }
@@ -205,7 +204,7 @@ export const fetchNewsByHashtag = async (hashtagSlug: string, limit: number = 10
       .order('published_at', { ascending: false })
       .limit(limit);
     
-    if (articlesError) {
+    if (articlesError || !articles) {
       console.error('Error fetching articles by hashtag:', articlesError);
       return [];
     }
