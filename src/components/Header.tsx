@@ -44,11 +44,9 @@ const Header = ({
   return (
     <header className={`sticky top-0 z-40 transition-all duration-300 ${getHeaderClasses()}`}>
       <div className="container mx-auto px-4">
-        <div className="flex h-12 items-center justify-between">
-          {/* Left empty space for symmetry */}
-          <div className="flex items-center">
-            {/* Menu button removed from here */}
-          </div>
+        <div className="flex h-10 items-center justify-between">
+          {/* Left side empty for symmetry */}
+          <div className="flex-1"></div>
           
           {/* Right side - Search and profile */}
           <div className="flex items-center gap-3">

@@ -28,7 +28,6 @@ const Navbar = () => {
 
   const navItems = [
     { name: 'Trang chủ', path: '/', icon: <Home className="h-5 w-5" /> },
-    { name: 'Tin tức', path: '/news', icon: <Newspaper className="h-5 w-5" /> },
     { name: 'Xu hướng', path: '/trending', icon: <Compass className="h-5 w-5" /> },
     { name: 'Tiện ích', path: '/utilities', icon: <User className="h-5 w-5" /> },
   ];
@@ -95,7 +94,7 @@ const Navbar = () => {
       {/* Mobile menu button - positioned at left side of the header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed left-4 top-2 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-newsapp-teal text-white shadow-md md:hidden transform transition hover:scale-105 active:scale-95"
+        className="fixed left-4 top-1 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-newsapp-teal text-white shadow-md md:hidden transform transition hover:scale-105 active:scale-95"
       >
         {isOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </button>
