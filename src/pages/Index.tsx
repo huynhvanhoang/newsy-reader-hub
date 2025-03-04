@@ -7,8 +7,13 @@ import HorizontalCategories from '@/components/HorizontalCategories';
 import NewsList from '@/components/NewsList';
 import HashtagScrollbar from '@/components/HashtagScrollbar';
 import { Calendar } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { NewsItem } from '@/components/NewsCard';
+import { 
+  fetchFeaturedNews,
+  fetchLatestNews,
+  fetchTrendingNews
+} from '@/services/newsService';
+import { newsData, trendingNews as staticTrendingNews } from '@/data/newsData';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -33,128 +38,36 @@ const Index = () => {
       setIsLoading(false);
       setTimeout(() => {
         setShowSplash(false);
-      }, 1500);
-    }, 1500);
+      }, 1000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    async function fetchArticles() {
+    async function loadData() {
       try {
-        // Fetch featured articles
-        const { data: featuredData, error: featuredError } = await supabase
-          .from('articles')
-          .select('id, title, summary, image_url, slug, published_at, category_id, views')
-          .eq('is_featured', true)
-          .order('published_at', { ascending: false })
-          .limit(5);
-
-        if (featuredError) {
-          console.error('Error fetching featured articles:', featuredError);
-        } else {
-          // Transform data to match NewsItem interface
-          const transformedFeaturedData = await transformArticleData(featuredData || []);
-          setFeaturedNews(transformedFeaturedData);
-        }
-
-        // Fetch latest articles
-        const { data: latestData, error: latestError } = await supabase
-          .from('articles')
-          .select('id, title, summary, image_url, slug, published_at, category_id, views')
-          .order('published_at', { ascending: false })
-          .limit(6);
-
-        if (latestError) {
-          console.error('Error fetching latest articles:', latestError);
-        } else {
-          // Transform data to match NewsItem interface
-          const transformedLatestData = await transformArticleData(latestData || []);
-          setLatestNews(transformedLatestData);
-        }
-
-        // Fetch trending articles (most viewed)
-        const { data: trendingData, error: trendingError } = await supabase
-          .from('articles')
-          .select('id, title, summary, image_url, slug, published_at, category_id, views')
-          .order('views', { ascending: false })
-          .limit(5);
-
-        if (trendingError) {
-          console.error('Error fetching trending articles:', trendingError);
-        } else {
-          // Transform data to match NewsItem interface
-          const transformedTrendingData = await transformArticleData(trendingData || []);
-          setTrendingNews(transformedTrendingData);
-        }
+        // Load data from Supabase
+        const featured = await fetchFeaturedNews();
+        const latest = await fetchLatestNews(6);
+        const trending = await fetchTrendingNews(5);
+        
+        setFeaturedNews(featured);
+        setLatestNews(latest);
+        setTrendingNews(trending);
       } catch (error) {
         console.error('Failed to fetch articles:', error);
+        // Fallback to static data if needed
+        if (featuredNews.length === 0) setFeaturedNews(newsData.slice(0, 5));
+        if (latestNews.length === 0) setLatestNews(newsData.slice(0, 6));
+        if (trendingNews.length === 0) setTrendingNews(staticTrendingNews);
       }
-    }
-
-    // Helper function to transform article data by adding category name
-    async function transformArticleData(articles: any[]): Promise<NewsItem[]> {
-      // Get all unique category IDs
-      const categoryIds = [...new Set(articles.filter(a => a.category_id).map(a => a.category_id))];
-      
-      // Fetch categories if needed
-      let categoryMap: Record<number, string> = {};
-      if (categoryIds.length > 0) {
-        const { data: categories } = await supabase
-          .from('categories')
-          .select('id, name')
-          .in('id', categoryIds);
-          
-        if (categories) {
-          categoryMap = categories.reduce((map: Record<number, string>, category) => {
-            map[category.id] = category.name;
-            return map;
-          }, {});
-        }
-      }
-      
-      // Transform articles
-      return articles.map(article => ({
-        ...article,
-        category: article.category_id ? categoryMap[article.category_id] : 'Tin tức',
-        source: 'Báo 24h'
-      }));
     }
 
     if (!showSplash) {
-      fetchArticles();
+      loadData();
     }
   }, [showSplash]);
-
-  // Fallback to static data if Supabase doesn't return results
-  useEffect(() => {
-    const checkAndLoadFallbackData = async () => {
-      if (!showSplash) {
-        // Import static data if needed
-        if (featuredNews.length === 0 || latestNews.length === 0 || trendingNews.length === 0) {
-          try {
-            const { newsData, trendingNews: staticTrendingNews } = await import('@/data/newsData');
-            
-            if (featuredNews.length === 0) {
-              setFeaturedNews(newsData.slice(0, 5));
-            }
-            
-            if (latestNews.length === 0) {
-              setLatestNews(newsData.slice(0, 6));
-            }
-            
-            if (trendingNews.length === 0) {
-              setTrendingNews(staticTrendingNews);
-            }
-          } catch (error) {
-            console.error('Failed to load fallback data:', error);
-          }
-        }
-      }
-    };
-    
-    checkAndLoadFallbackData();
-  }, [showSplash, featuredNews.length, latestNews.length, trendingNews.length]);
 
   if (showSplash) {
     return (

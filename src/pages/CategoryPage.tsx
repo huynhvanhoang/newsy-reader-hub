@@ -1,44 +1,123 @@
+
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
 import NewsList from '@/components/NewsList';
-import NewsCard from '@/components/NewsCard';
-import { newsData } from '@/data/newsData';
-import { categories } from '@/data/categoryData';
+import { NewsItem } from '@/components/NewsCard';
+import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft } from 'lucide-react';
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [categoryData, setCategoryData] = useState<any | null>(null);
-  const [filteredNews, setFilteredNews] = useState([]);
+  const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
+  const [relatedCategories, setRelatedCategories] = useState<any[]>([]);
   
   useEffect(() => {
-    const category = categories.find((c) => c.slug === slug);
-    
-    if (category) {
-      setCategoryData(category);
+    async function fetchCategoryData() {
+      setIsLoading(true);
       
-      const categoryName = category.name;
-      const newsForCategory = newsData.filter((item) => {
-        return item.category.toLowerCase().includes(categoryName.toLowerCase()) ||
-               categoryName.toLowerCase().includes(item.category.toLowerCase());
-      });
-      
-      setFilteredNews(newsForCategory.length > 0 ? newsForCategory : newsData.slice(0, 5));
-    } else {
-      setCategoryData({
-        name: 'Danh mục không tồn tại',
-        image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
-      });
-      setFilteredNews(newsData.slice(0, 3));
+      try {
+        // Fetch the current category
+        const { data: category, error: categoryError } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+        
+        if (categoryError) {
+          console.error('Error fetching category:', categoryError);
+          setCategoryData({
+            name: 'Danh mục không tồn tại',
+            image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+          });
+          setFilteredNews([]);
+          return;
+        }
+        
+        setCategoryData(category);
+        
+        // Fetch articles for this category
+        const { data: articles, error: articlesError } = await supabase
+          .from('articles')
+          .select(`
+            id,
+            title,
+            summary,
+            image_url,
+            slug,
+            published_at,
+            views,
+            category_id,
+            categories(name)
+          `)
+          .eq('category_id', category.id)
+          .order('published_at', { ascending: false });
+        
+        if (articlesError) {
+          console.error('Error fetching articles:', articlesError);
+          setFilteredNews([]);
+          return;
+        }
+        
+        // Transform articles to match NewsItem interface
+        const transformedArticles: NewsItem[] = articles.map(article => ({
+          id: article.id.toString(),
+          title: article.title,
+          summary: article.summary || '',
+          image: article.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+          category: article.categories?.name || category.name,
+          source: 'Báo 24h',
+          timestamp: formatTimestamp(article.published_at),
+          slug: article.slug,
+          published_at: article.published_at
+        }));
+        
+        setFilteredNews(transformedArticles);
+        
+        // Fetch related categories
+        const { data: relatedCats, error: relatedCatsError } = await supabase
+          .from('categories')
+          .select('*')
+          .neq('id', category.id)
+          .limit(4);
+        
+        if (relatedCatsError) {
+          console.error('Error fetching related categories:', relatedCatsError);
+          setRelatedCategories([]);
+          return;
+        }
+        
+        setRelatedCategories(relatedCats);
+      } catch (error) {
+        console.error('Error in category page:', error);
+      } finally {
+        // Short delay to show loading effect
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
+      }
     }
     
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+    fetchCategoryData();
   }, [slug]);
+  
+  // Helper function to format timestamp
+  const formatTimestamp = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffHours < 24) {
+      return `${diffHours} giờ trước`;
+    } else {
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays} ngày trước`;
+    }
+  };
   
   if (isLoading || !categoryData) {
     return (
@@ -57,7 +136,7 @@ const CategoryPage = () => {
       
       <div className="relative h-48 w-full overflow-hidden sm:h-64">
         <img
-          src={categoryData.image}
+          src={categoryData.image || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80'}
           alt={categoryData.name}
           className="h-full w-full object-cover"
         />
@@ -94,28 +173,25 @@ const CategoryPage = () => {
           <h2 className="mb-4 text-xl font-bold">Danh mục liên quan</h2>
           
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {categories
-              .filter((c) => c.slug !== slug)
-              .slice(0, 4)
-              .map((category) => (
-                <Link
-                  key={category.id}
-                  to={`/category/${category.slug}`}
-                  className="group relative aspect-video overflow-hidden rounded-xl"
-                >
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <h3 className="text-center text-sm font-bold text-white">
-                      {category.name}
-                    </h3>
-                  </div>
-                </Link>
-              ))}
+            {relatedCategories.map((category) => (
+              <Link
+                key={category.id}
+                to={`/category/${category.slug}`}
+                className="group relative aspect-video overflow-hidden rounded-xl"
+              >
+                <img
+                  src={category.image || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80'}
+                  alt={category.name}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <h3 className="text-center text-sm font-bold text-white">
+                    {category.name}
+                  </h3>
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
       </main>

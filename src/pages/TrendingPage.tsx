@@ -3,18 +3,47 @@ import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
 import NewsList from '@/components/NewsList';
-import { trendingNews, hotNews, analyticNews } from '@/data/newsData';
+import { NewsItem } from '@/components/NewsCard';
+import { fetchTrendingNews, fetchLatestNews } from '@/services/newsService';
+import { trendingNews as staticTrendingNews, hotNews as staticHotNews, analyticNews as staticAnalyticNews } from '@/data/newsData';
 
 const TrendingPage = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const [trendingNews, setTrendingNews] = useState<NewsItem[]>([]);
+  const [hotNews, setHotNews] = useState<NewsItem[]>([]);
+  const [analyticNews, setAnalyticNews] = useState<NewsItem[]>([]);
   
   useEffect(() => {
-    // Simulate loading time
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+    async function fetchData() {
+      try {
+        // Fetch trending news (most viewed)
+        const trending = await fetchTrendingNews(5);
+        setTrendingNews(trending);
+        
+        // For now, use the latest news as hot news and analytic news
+        // In a real app, you might want to add additional flags in the database
+        const latest = await fetchLatestNews(10);
+        
+        // Split latest news into hot and analytic
+        if (latest.length > 0) {
+          setHotNews(latest.slice(0, 3));
+          setAnalyticNews(latest.slice(3, 6));
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error fetching trending data:', error);
+        
+        // Fallback to static data
+        setTrendingNews(staticTrendingNews);
+        setHotNews(staticHotNews);
+        setAnalyticNews(staticAnalyticNews);
+        
+        setIsLoading(false);
+      }
+    }
     
-    return () => clearTimeout(timer);
+    fetchData();
   }, []);
   
   if (isLoading) {

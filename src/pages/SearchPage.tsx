@@ -1,226 +1,175 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, X, Filter } from 'lucide-react';
 import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
 import NewsList from '@/components/NewsList';
 import { NewsItem } from '@/components/NewsCard';
-import { newsData, trendingNews } from '@/data/newsData';
-import { categories } from '@/data/categoryData';
+import { Hashtag } from 'lucide-react';
+import { fetchNewsByHashtag } from '@/services/newsService';
+import { supabase } from '@/integrations/supabase/client';
 
 const SearchPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('q') || '');
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('query') || '';
+  const hashtag = searchParams.get('hashtag') || '';
+  
+  const [isLoading, setIsLoading] = useState(true);
   const [results, setResults] = useState<NewsItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [showFilter, setShowFilter] = useState(false);
+  const [hashtagInfo, setHashtagInfo] = useState<{name: string, count: number} | null>(null);
   
-  // Handle search
-  const handleSearch = (query: string) => {
-    setIsLoading(true);
-    setSearchParams({ q: query });
-    
-    // Simulate search with delay
-    setTimeout(() => {
-      if (!query.trim()) {
-        setResults([]);
-        setIsLoading(false);
-        return;
-      }
-      
-      const lowercaseQuery = query.toLowerCase();
-      
-      // Filter news by title, category, or source
-      let filteredResults = newsData.filter(item => 
-        item.title.toLowerCase().includes(lowercaseQuery) || 
-        item.category.toLowerCase().includes(lowercaseQuery) || 
-        item.source.toLowerCase().includes(lowercaseQuery)
-      );
-      
-      // Apply category filter if selected
-      if (selectedCategory) {
-        filteredResults = filteredResults.filter(item => 
-          item.category.toLowerCase() === selectedCategory.toLowerCase()
-        );
-      }
-      
-      setResults(filteredResults);
-      setIsLoading(false);
-    }, 500);
-  };
-  
-  // Search on mount if query exists
   useEffect(() => {
-    const query = searchParams.get('q');
-    if (query) {
-      setSearchTerm(query);
-      handleSearch(query);
+    async function fetchResults() {
+      setIsLoading(true);
+      
+      try {
+        if (hashtag) {
+          // Search by hashtag
+          const hashtagResults = await fetchNewsByHashtag(hashtag);
+          setResults(hashtagResults);
+          
+          // Get hashtag info
+          const { data: hashtagData } = await supabase
+            .from('hashtags')
+            .select('name')
+            .eq('slug', hashtag)
+            .single();
+            
+          if (hashtagData) {
+            setHashtagInfo({
+              name: hashtagData.name,
+              count: hashtagResults.length
+            });
+          }
+        } else if (query) {
+          // Search by query (title or content)
+          const { data, error } = await supabase
+            .from('articles')
+            .select(`
+              id,
+              title,
+              summary,
+              image_url,
+              slug,
+              published_at,
+              views,
+              category_id,
+              categories(name)
+            `)
+            .or(`title.ilike.%${query}%,content.ilike.%${query}%`)
+            .order('published_at', { ascending: false });
+            
+          if (error) {
+            console.error('Error searching articles:', error);
+            setResults([]);
+          } else {
+            // Transform to NewsItem format
+            const transformedResults: NewsItem[] = data.map(article => ({
+              id: article.id.toString(),
+              title: article.title,
+              summary: article.summary || '',
+              image: article.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
+              category: article.categories?.name || 'Tin tức',
+              source: 'Báo 24h',
+              timestamp: formatTimestamp(article.published_at),
+              slug: article.slug,
+              published_at: article.published_at
+            }));
+            
+            setResults(transformedResults);
+          }
+        } else {
+          setResults([]);
+        }
+      } catch (error) {
+        console.error('Error fetching search results:', error);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }, []);
+    
+    fetchResults();
+  }, [query, hashtag]);
   
-  // Handle category filter change
-  const handleCategoryChange = (category: string | null) => {
-    setSelectedCategory(category);
-    if (searchTerm) {
-      handleSearch(searchTerm);
+  // Helper function to format timestamp
+  const formatTimestamp = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffHours < 24) {
+      return `${diffHours} giờ trước`;
+    } else {
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays} ngày trước`;
     }
   };
   
-  return (
-    <div className="min-h-screen bg-newsapp-background pb-20">
-      <Header title="Tìm kiếm" showSearch={false} />
-      
-      <main className="container mx-auto px-4 pt-4 animate-fade-in">
-        {/* Search form */}
-        <div className="mb-6 relative">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm kiếm tin tức..."
-              className="block w-full rounded-lg border border-gray-300 bg-white p-2.5 pl-10 pr-10 text-sm text-gray-900 focus:border-newsapp-teal focus:ring-newsapp-teal"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch(searchTerm);
-                }
-              }}
-            />
-            
-            {searchTerm && (
-              <button
-                type="button"
-                className="absolute inset-y-0 right-12 flex items-center pr-3"
-                onClick={() => {
-                  setSearchTerm('');
-                  setResults([]);
-                  setSearchParams({});
-                }}
-              >
-                <X className="h-4 w-4 text-gray-500" />
-              </button>
-            )}
-            
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 flex items-center pr-3"
-              onClick={() => setShowFilter(!showFilter)}
-            >
-              <Filter className={`h-5 w-5 ${selectedCategory ? 'text-newsapp-teal' : 'text-gray-500'}`} />
-            </button>
-          </div>
-          
-          {/* Filter options */}
-          {showFilter && (
-            <div className="mt-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <h3 className="mb-2 text-sm font-medium">Lọc theo chuyên mục:</h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    selectedCategory === null 
-                      ? 'bg-newsapp-teal text-white' 
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                  onClick={() => handleCategoryChange(null)}
-                >
-                  Tất cả
-                </button>
-                
-                {categories.slice(0, 8).map((category) => (
-                  <button
-                    key={category.id}
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      selectedCategory === category.name 
-                        ? 'bg-newsapp-teal text-white' 
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    onClick={() => handleCategoryChange(category.name)}
-                  >
-                    {category.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Search results */}
-        {isLoading ? (
-          <div className="animate-pulse space-y-4">
-            {[1, 2, 3, 4].map((item) => (
+  let pageTitle = 'Tìm kiếm';
+  let searchDescription = '';
+  
+  if (hashtag && hashtagInfo) {
+    pageTitle = `#${hashtagInfo.name}`;
+    searchDescription = `${hashtagInfo.count} bài viết`;
+  } else if (query) {
+    pageTitle = 'Kết quả tìm kiếm';
+    searchDescription = `"${query}" (${results.length} kết quả)`;
+  }
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-newsapp-background">
+        <Header title={pageTitle} />
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-6">
+            {[1, 2, 3].map((item) => (
               <div key={item} className="rounded-xl bg-white p-4 shadow-sm">
-                <div className="flex gap-3">
-                  <div className="h-16 w-16 rounded-md bg-gray-200"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 rounded bg-gray-200"></div>
-                    <div className="h-4 w-5/6 rounded bg-gray-200"></div>
-                    <div className="h-3 w-1/4 rounded bg-gray-200"></div>
-                  </div>
-                </div>
+                <div className="h-4 w-3/4 rounded bg-gray-200 mb-2"></div>
+                <div className="h-4 w-full rounded bg-gray-200"></div>
               </div>
             ))}
           </div>
+        </div>
+        <Navbar />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="min-h-screen bg-newsapp-background pb-20">
+      <Header title={pageTitle} />
+      
+      <main className="container mx-auto px-4 pt-4 animate-fade-in">
+        {hashtag && hashtagInfo && (
+          <div className="mb-6 flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-newsapp-teal/10">
+              <Hashtag className="h-5 w-5 text-newsapp-teal" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">#{hashtagInfo.name}</h1>
+              <p className="text-sm text-gray-600">{searchDescription}</p>
+            </div>
+          </div>
+        )}
+        
+        {query && (
+          <div className="mb-6">
+            <h1 className="text-xl font-bold">Kết quả tìm kiếm</h1>
+            <p className="text-sm text-gray-600">{searchDescription}</p>
+          </div>
+        )}
+        
+        {results.length > 0 ? (
+          <NewsList items={results} variant="default" />
         ) : (
-          <>
-            {searchTerm && (
-              <div className="mb-4">
-                <h2 className="text-xl font-bold">
-                  {results.length > 0 
-                    ? `Kết quả cho "${searchTerm}" (${results.length})` 
-                    : `Không tìm thấy kết quả cho "${searchTerm}"`}
-                </h2>
-              </div>
-            )}
-            
-            {results.length > 0 ? (
-              <div className="rounded-xl bg-white p-4 shadow-sm">
-                <NewsList items={results} variant="compact" />
-              </div>
-            ) : (
-              !isLoading && searchTerm && (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="mb-4 rounded-full bg-gray-100 p-4">
-                    <Search className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="mb-2 text-lg font-semibold">Không tìm thấy kết quả</h3>
-                  <p className="text-sm text-gray-600">
-                    Hãy thử tìm kiếm với từ khóa khác hoặc xem các xu hướng bên dưới
-                  </p>
-                </div>
-              )
-            )}
-            
-            {!searchTerm && (
-              <>
-                <h2 className="mb-4 text-xl font-bold">Xu hướng tìm kiếm</h2>
-                <div className="mb-6 flex flex-wrap gap-2">
-                  {['COVID-19', 'Ukraine', 'Giá vàng', 'Giá xăng', 'Thời tiết', 'Bóng đá', 'Chứng khoán'].map((trend) => (
-                    <button
-                      key={trend}
-                      className="rounded-full bg-white px-4 py-2 text-sm font-medium shadow-sm hover:bg-gray-50"
-                      onClick={() => {
-                        setSearchTerm(trend);
-                        handleSearch(trend);
-                      }}
-                    >
-                      # {trend}
-                    </button>
-                  ))}
-                </div>
-                
-                <h2 className="mb-4 text-xl font-bold">Được tìm kiếm nhiều</h2>
-                <div className="rounded-xl bg-white p-4 shadow-sm">
-                  <NewsList items={trendingNews} variant="compact" />
-                </div>
-              </>
-            )}
-          </>
+          <div className="rounded-xl bg-white p-8 text-center">
+            <p className="text-lg font-medium text-gray-600">Không tìm thấy kết quả nào</p>
+            <p className="mt-2 text-sm text-gray-500">
+              {query ? 'Hãy thử tìm kiếm với từ khóa khác' : 'Không có bài viết nào với hashtag này'}
+            </p>
+          </div>
         )}
       </main>
       
