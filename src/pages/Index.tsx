@@ -210,7 +210,7 @@ const Index = () => {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {latestNews.map((item, index) => (
               <div key={item.id} className="animate-fade-up" style={{ animationDelay: `${index * 0.1}s` }}>
-                <NewsCard item={item} />
+                <NewsList items={[item]} variant="default" />
               </div>
             ))}
           </div>
