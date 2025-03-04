@@ -18,8 +18,7 @@ const HashtagScrollbar = () => {
       try {
         const { data, error } = await supabase
           .from('hashtags')
-          .select('id, name, slug')
-          .order('id', { ascending: true });
+          .select('id, name, slug');
         
         if (error) {
           console.error('Error fetching hashtags:', error);

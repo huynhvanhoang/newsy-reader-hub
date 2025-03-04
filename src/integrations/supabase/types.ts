@@ -9,7 +9,137 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      article_hashtags: {
+        Row: {
+          article_id: number
+          hashtag_id: number
+        }
+        Insert: {
+          article_id: number
+          hashtag_id: number
+        }
+        Update: {
+          article_id?: number
+          hashtag_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_hashtags_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_hashtags_hashtag_id_fkey"
+            columns: ["hashtag_id"]
+            isOneToOne: false
+            referencedRelation: "hashtags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      articles: {
+        Row: {
+          category_id: number | null
+          content: string
+          created_at: string
+          id: number
+          image_url: string | null
+          is_featured: boolean | null
+          published_at: string
+          slug: string
+          summary: string | null
+          title: string
+          updated_at: string
+          views: number | null
+        }
+        Insert: {
+          category_id?: number | null
+          content: string
+          created_at?: string
+          id?: number
+          image_url?: string | null
+          is_featured?: boolean | null
+          published_at?: string
+          slug: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+          views?: number | null
+        }
+        Update: {
+          category_id?: number | null
+          content?: string
+          created_at?: string
+          id?: number
+          image_url?: string | null
+          is_featured?: boolean | null
+          published_at?: string
+          slug?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: number
+          name: string
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: number
+          name: string
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: number
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      hashtags: {
+        Row: {
+          created_at: string
+          id: number
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

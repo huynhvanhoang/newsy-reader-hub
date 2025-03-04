@@ -32,8 +32,7 @@ const HorizontalCategories = ({ categories: propCategories }: HorizontalCategori
         try {
           const { data, error } = await supabase
             .from('categories')
-            .select('id, name, slug, icon, color')
-            .order('id', { ascending: true });
+            .select('id, name, slug, icon, color');
           
           if (error) {
             console.error('Error fetching categories:', error);

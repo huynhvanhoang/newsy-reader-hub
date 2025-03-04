@@ -5,31 +5,18 @@ import Navbar from '@/components/Navbar';
 import FeaturedNews from '@/components/FeaturedNews';
 import HorizontalCategories from '@/components/HorizontalCategories';
 import NewsList from '@/components/NewsList';
-import NewsCard from '@/components/NewsCard';
+import HashtagScrollbar from '@/components/HashtagScrollbar';
 import { Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import HashtagScrollbar from '@/components/HashtagScrollbar';
-
-interface Article {
-  id: string;
-  title: string;
-  summary?: string;
-  content: string;
-  image_url?: string;
-  slug: string;
-  published_at: string;
-  category_id?: number;
-  is_featured?: boolean;
-  views?: number;
-}
+import { NewsItem } from '@/components/NewsCard';
 
 const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showSplash, setShowSplash] = useState(true);
   const [currentDate, setCurrentDate] = useState('');
-  const [featuredNews, setFeaturedNews] = useState<Article[]>([]);
-  const [latestNews, setLatestNews] = useState<Article[]>([]);
-  const [trendingNews, setTrendingNews] = useState<Article[]>([]);
+  const [featuredNews, setFeaturedNews] = useState<NewsItem[]>([]);
+  const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
+  const [trendingNews, setTrendingNews] = useState<NewsItem[]>([]);
 
   useEffect(() => {
     // Get current date in Vietnamese format
@@ -58,7 +45,7 @@ const Index = () => {
         // Fetch featured articles
         const { data: featuredData, error: featuredError } = await supabase
           .from('articles')
-          .select('*')
+          .select('id, title, summary, image_url, slug, published_at, category_id, views')
           .eq('is_featured', true)
           .order('published_at', { ascending: false })
           .limit(5);
@@ -66,37 +53,72 @@ const Index = () => {
         if (featuredError) {
           console.error('Error fetching featured articles:', featuredError);
         } else {
-          setFeaturedNews(featuredData || []);
+          // Transform data to match NewsItem interface
+          const transformedFeaturedData = await transformArticleData(featuredData || []);
+          setFeaturedNews(transformedFeaturedData);
         }
 
         // Fetch latest articles
         const { data: latestData, error: latestError } = await supabase
           .from('articles')
-          .select('*')
+          .select('id, title, summary, image_url, slug, published_at, category_id, views')
           .order('published_at', { ascending: false })
           .limit(6);
 
         if (latestError) {
           console.error('Error fetching latest articles:', latestError);
         } else {
-          setLatestNews(latestData || []);
+          // Transform data to match NewsItem interface
+          const transformedLatestData = await transformArticleData(latestData || []);
+          setLatestNews(transformedLatestData);
         }
 
         // Fetch trending articles (most viewed)
         const { data: trendingData, error: trendingError } = await supabase
           .from('articles')
-          .select('*')
+          .select('id, title, summary, image_url, slug, published_at, category_id, views')
           .order('views', { ascending: false })
           .limit(5);
 
         if (trendingError) {
           console.error('Error fetching trending articles:', trendingError);
         } else {
-          setTrendingNews(trendingData || []);
+          // Transform data to match NewsItem interface
+          const transformedTrendingData = await transformArticleData(trendingData || []);
+          setTrendingNews(transformedTrendingData);
         }
       } catch (error) {
         console.error('Failed to fetch articles:', error);
       }
+    }
+
+    // Helper function to transform article data by adding category name
+    async function transformArticleData(articles: any[]): Promise<NewsItem[]> {
+      // Get all unique category IDs
+      const categoryIds = [...new Set(articles.filter(a => a.category_id).map(a => a.category_id))];
+      
+      // Fetch categories if needed
+      let categoryMap: Record<number, string> = {};
+      if (categoryIds.length > 0) {
+        const { data: categories } = await supabase
+          .from('categories')
+          .select('id, name')
+          .in('id', categoryIds);
+          
+        if (categories) {
+          categoryMap = categories.reduce((map: Record<number, string>, category) => {
+            map[category.id] = category.name;
+            return map;
+          }, {});
+        }
+      }
+      
+      // Transform articles
+      return articles.map(article => ({
+        ...article,
+        category: article.category_id ? categoryMap[article.category_id] : 'Tin tức',
+        source: 'Báo 24h'
+      }));
     }
 
     if (!showSplash) {
@@ -110,18 +132,22 @@ const Index = () => {
       if (!showSplash) {
         // Import static data if needed
         if (featuredNews.length === 0 || latestNews.length === 0 || trendingNews.length === 0) {
-          const { newsData, trendingNews: staticTrendingNews } = await import('@/data/newsData');
-          
-          if (featuredNews.length === 0) {
-            setFeaturedNews(newsData.slice(0, 5));
-          }
-          
-          if (latestNews.length === 0) {
-            setLatestNews(newsData.slice(0, 6));
-          }
-          
-          if (trendingNews.length === 0) {
-            setTrendingNews(staticTrendingNews);
+          try {
+            const { newsData, trendingNews: staticTrendingNews } = await import('@/data/newsData');
+            
+            if (featuredNews.length === 0) {
+              setFeaturedNews(newsData.slice(0, 5));
+            }
+            
+            if (latestNews.length === 0) {
+              setLatestNews(newsData.slice(0, 6));
+            }
+            
+            if (trendingNews.length === 0) {
+              setTrendingNews(staticTrendingNews);
+            }
+          } catch (error) {
+            console.error('Failed to load fallback data:', error);
           }
         }
       }
@@ -155,11 +181,11 @@ const Index = () => {
       <div className="bg-gradient-to-r from-newsapp-teal to-blue-500 pb-2">
         <Header transparent={true} />
         
-        <div className="container mx-auto px-4 mt-6">
+        <div className="container mx-auto px-4 mt-2">
           <HorizontalCategories />
         </div>
         
-        <div className="container mx-auto px-4 py-2">
+        <div className="container mx-auto px-4 py-1">
           <div className="flex items-center gap-2 text-white/90 text-sm">
             <Calendar className="h-4 w-4" />
             <span>{currentDate}</span>
@@ -171,7 +197,7 @@ const Index = () => {
         <HashtagScrollbar />
         
         <section className="mb-8">
-          <FeaturedNews items={featuredNews.length > 0 ? featuredNews : []} />
+          <FeaturedNews items={featuredNews} />
         </section>
         
         <section className="mb-8">
