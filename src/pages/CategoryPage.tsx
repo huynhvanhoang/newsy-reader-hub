@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from '@/components/Header';
@@ -7,7 +6,7 @@ import NewsList from '@/components/NewsList';
 import { NewsItem } from '@/components/NewsCard';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft } from 'lucide-react';
-import { transformArticleToNewsItem, formatTimestamp } from '@/services/newsService';
+import { transformArticleToNewsItem } from '@/services/newsService';
 
 interface CategoryData {
   id: number;
@@ -50,7 +49,8 @@ const CategoryPage = () => {
         
         const category = {
           ...categoriesData[0],
-          slug: categoriesData[0].name.toLowerCase().replace(/\s+/g, '-')
+          slug: categoriesData[0].name.toLowerCase().replace(/\s+/g, '-'),
+          image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80'
         };
         setCategoryData(category);
         
@@ -62,7 +62,7 @@ const CategoryPage = () => {
             title,
             summary,
             image_url,
-            slug,
+            url,
             publish_date,
             category_id,
             categories(name)
@@ -73,12 +73,11 @@ const CategoryPage = () => {
         if (articlesError) {
           console.error('Error fetching articles:', articlesError);
           setFilteredNews([]);
-        } else {
+        } else if (articlesData) {
           // Transform articles to match NewsItem interface
-          const transformedArticles: NewsItem[] = articlesData.map(article => ({
-            ...transformArticleToNewsItem(article),
-            published_at: article.publish_date
-          }));
+          const transformedArticles: NewsItem[] = articlesData.map(article => 
+            transformArticleToNewsItem(article)
+          );
           
           setFilteredNews(transformedArticles);
         }
@@ -93,7 +92,7 @@ const CategoryPage = () => {
         if (relatedCatsError) {
           console.error('Error fetching related categories:', relatedCatsError);
           setRelatedCategories([]);
-        } else {
+        } else if (relatedCatsData) {
           // Transform categories to include slug
           const transformedCategories = relatedCatsData.map(cat => ({
             id: cat.id,
@@ -152,7 +151,7 @@ const CategoryPage = () => {
       <main className="container mx-auto px-4 pt-6 animate-fade-in">
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold">Tin {categoryData.name}</h2>
+            <h2 className="text-xl font-bold">Tin {categoryData?.name}</h2>
           </div>
           
           <div className="space-y-4">

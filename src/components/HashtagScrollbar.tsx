@@ -25,6 +25,11 @@ const HashtagScrollbar = () => {
           return;
         }
         
+        if (!data) {
+          setHashtags([]);
+          return;
+        }
+        
         // Transform the data to include a slug field
         const transformedData = data.map(tag => ({
           id: tag.id,
@@ -32,7 +37,7 @@ const HashtagScrollbar = () => {
           slug: tag.name.toLowerCase().replace(/\s+/g, '-')
         }));
         
-        setHashtags(transformedData || []);
+        setHashtags(transformedData);
       } catch (error) {
         console.error('Failed to fetch hashtags:', error);
       } finally {
