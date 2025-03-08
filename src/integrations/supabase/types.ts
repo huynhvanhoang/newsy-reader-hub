@@ -9,134 +9,250 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      article_hashtags: {
+      categories: {
         Row: {
-          article_id: number
-          hashtag_id: number
+          created_at: string
+          id: number
+          name: string
         }
         Insert: {
-          article_id: number
-          hashtag_id: number
+          created_at?: string
+          id?: number
+          name: string
         }
         Update: {
-          article_id?: number
-          hashtag_id?: number
+          created_at?: string
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      crawler_logs: {
+        Row: {
+          articles_crawled: number | null
+          created_at: string
+          id: string
+          message: string | null
+          source_id: string | null
+          status: string
+        }
+        Insert: {
+          articles_crawled?: number | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          source_id?: string | null
+          status: string
+        }
+        Update: {
+          articles_crawled?: number | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          source_id?: string | null
+          status?: string
         }
         Relationships: [
           {
-            foreignKeyName: "article_hashtags_article_id_fkey"
-            columns: ["article_id"]
+            foreignKeyName: "crawler_logs_source_id_fkey"
+            columns: ["source_id"]
             isOneToOne: false
-            referencedRelation: "articles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "article_hashtags_hashtag_id_fkey"
-            columns: ["hashtag_id"]
-            isOneToOne: false
-            referencedRelation: "hashtags"
+            referencedRelation: "sources"
             referencedColumns: ["id"]
           },
         ]
       }
-      articles: {
+      news_articles: {
         Row: {
+          author: string | null
           category_id: number | null
           content: string
           created_at: string
-          id: number
+          id: string
           image_url: string | null
-          is_featured: boolean | null
-          published_at: string
-          slug: string
+          publish_date: string | null
+          source_id: string
           summary: string | null
           title: string
           updated_at: string
-          views: number | null
+          url: string
         }
         Insert: {
+          author?: string | null
           category_id?: number | null
           content: string
           created_at?: string
-          id?: number
+          id?: string
           image_url?: string | null
-          is_featured?: boolean | null
-          published_at?: string
-          slug: string
+          publish_date?: string | null
+          source_id: string
           summary?: string | null
           title: string
           updated_at?: string
-          views?: number | null
+          url: string
         }
         Update: {
+          author?: string | null
           category_id?: number | null
           content?: string
           created_at?: string
-          id?: number
+          id?: string
           image_url?: string | null
-          is_featured?: boolean | null
-          published_at?: string
-          slug?: string
+          publish_date?: string | null
+          source_id?: string
           summary?: string | null
           title?: string
           updated_at?: string
-          views?: number | null
+          url?: string
         }
         Relationships: [
           {
-            foreignKeyName: "articles_category_id_fkey"
+            foreignKeyName: "news_articles_category_id_fkey"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "news_articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      categories: {
+      news_images: {
         Row: {
-          color: string | null
+          caption: string | null
           created_at: string
-          icon: string | null
-          id: number
-          name: string
-          slug: string
+          id: string
+          news_id: string | null
+          url: string
         }
         Insert: {
-          color?: string | null
+          caption?: string | null
           created_at?: string
-          icon?: string | null
-          id?: number
-          name: string
-          slug: string
+          id?: string
+          news_id?: string | null
+          url: string
         }
         Update: {
-          color?: string | null
+          caption?: string | null
           created_at?: string
-          icon?: string | null
-          id?: number
-          name?: string
-          slug?: string
+          id?: string
+          news_id?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_images_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      news_tags: {
+        Row: {
+          news_id: string
+          tag_id: number
+        }
+        Insert: {
+          news_id: string
+          tag_id: number
+        }
+        Update: {
+          news_id?: string
+          tag_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_tags_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduler_runs: {
+        Row: {
+          articles_crawled: number | null
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          articles_crawled?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          started_at?: string
+          status: string
+        }
+        Update: {
+          articles_crawled?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          started_at?: string
+          status?: string
         }
         Relationships: []
       }
-      hashtags: {
+      sources: {
+        Row: {
+          created_at: string
+          id: string
+          logo: string | null
+          name: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          logo?: string | null
+          name: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo?: string | null
+          name?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      tags: {
         Row: {
           created_at: string
           id: number
           name: string
-          slug: string
         }
         Insert: {
           created_at?: string
           id?: number
           name: string
-          slug: string
         }
         Update: {
           created_at?: string
           id?: number
           name?: string
-          slug?: string
         }
         Relationships: []
       }
