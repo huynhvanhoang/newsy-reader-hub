@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Search, Tag } from 'lucide-react';
 import { NewsItem } from '@/components/NewsCard';
 import { fetchNewsByHashtag } from '@/services/newsService';
-import { newsData } from '@/data/newsData';
 import HashtagScrollbar from '@/components/HashtagScrollbar';
 import { Skeleton } from "@/components/ui/skeleton";
 

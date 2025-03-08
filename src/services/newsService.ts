@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { NewsItem } from '@/components/NewsCard';
 
@@ -37,20 +38,19 @@ export const formatTimestamp = (dateString: string) => {
 export const fetchFeaturedNews = async (): Promise<NewsItem[]> => {
   try {
     const { data, error } = await supabase
-      .from('articles')
+      .from('news_articles')
       .select(`
         id,
         title,
         summary,
         image_url,
         slug,
-        published_at,
-        views,
+        publish_date,
         category_id,
         categories(name)
       `)
       .eq('is_featured', true)
-      .order('published_at', { ascending: false })
+      .order('publish_date', { ascending: false })
       .limit(5);
     
     if (error) {
@@ -58,7 +58,10 @@ export const fetchFeaturedNews = async (): Promise<NewsItem[]> => {
       return [];
     }
     
-    return data.map(transformArticleToNewsItem);
+    return data.map(article => ({
+      ...transformArticleToNewsItem(article),
+      published_at: article.publish_date
+    }));
   } catch (error) {
     console.error('Error fetching featured news:', error);
     return [];
@@ -69,19 +72,18 @@ export const fetchFeaturedNews = async (): Promise<NewsItem[]> => {
 export const fetchLatestNews = async (limit: number = 6): Promise<NewsItem[]> => {
   try {
     const { data, error } = await supabase
-      .from('articles')
+      .from('news_articles')
       .select(`
         id,
         title,
         summary,
         image_url,
         slug,
-        published_at,
-        views,
+        publish_date,
         category_id,
         categories(name)
       `)
-      .order('published_at', { ascending: false })
+      .order('publish_date', { ascending: false })
       .limit(limit);
     
     if (error) {
@@ -89,7 +91,10 @@ export const fetchLatestNews = async (limit: number = 6): Promise<NewsItem[]> =>
       return [];
     }
     
-    return data.map(transformArticleToNewsItem);
+    return data.map(article => ({
+      ...transformArticleToNewsItem(article),
+      published_at: article.publish_date
+    }));
   } catch (error) {
     console.error('Error fetching latest news:', error);
     return [];
@@ -100,15 +105,14 @@ export const fetchLatestNews = async (limit: number = 6): Promise<NewsItem[]> =>
 export const fetchTrendingNews = async (limit: number = 5): Promise<NewsItem[]> => {
   try {
     const { data, error } = await supabase
-      .from('articles')
+      .from('news_articles')
       .select(`
         id,
         title,
         summary,
         image_url,
         slug,
-        published_at,
-        views,
+        publish_date,
         category_id,
         categories(name)
       `)
@@ -120,7 +124,10 @@ export const fetchTrendingNews = async (limit: number = 5): Promise<NewsItem[]> 
       return [];
     }
     
-    return data.map(transformArticleToNewsItem);
+    return data.map(article => ({
+      ...transformArticleToNewsItem(article),
+      published_at: article.publish_date
+    }));
   } catch (error) {
     console.error('Error fetching trending news:', error);
     return [];
@@ -131,20 +138,19 @@ export const fetchTrendingNews = async (limit: number = 5): Promise<NewsItem[]> 
 export const fetchNewsByCategory = async (categoryId: number, limit: number = 10): Promise<NewsItem[]> => {
   try {
     const { data, error } = await supabase
-      .from('articles')
+      .from('news_articles')
       .select(`
         id,
         title,
         summary,
         image_url,
         slug,
-        published_at,
-        views,
+        publish_date,
         category_id,
         categories(name)
       `)
       .eq('category_id', categoryId)
-      .order('published_at', { ascending: false })
+      .order('publish_date', { ascending: false })
       .limit(limit);
     
     if (error) {
@@ -152,7 +158,10 @@ export const fetchNewsByCategory = async (categoryId: number, limit: number = 10
       return [];
     }
     
-    return data.map(transformArticleToNewsItem);
+    return data.map(article => ({
+      ...transformArticleToNewsItem(article),
+      published_at: article.publish_date
+    }));
   } catch (error) {
     console.error('Error fetching news by category:', error);
     return [];
@@ -164,9 +173,9 @@ export const fetchNewsByHashtag = async (hashtagSlug: string, limit: number = 10
   try {
     // First get the hashtag id
     const { data: hashtagData, error: hashtagError } = await supabase
-      .from('hashtags')
-      .select('id')
-      .ilike('slug', `%${hashtagSlug}%`) // More flexible search with ILIKE
+      .from('tags')
+      .select('id, name')
+      .ilike('name', `%${hashtagSlug}%`) // More flexible search with ILIKE
       .limit(1);
     
     if (hashtagError || !hashtagData || hashtagData.length === 0) {
@@ -175,33 +184,32 @@ export const fetchNewsByHashtag = async (hashtagSlug: string, limit: number = 10
     }
     
     // Then get the articles with this hashtag
-    const { data: articleHashtags, error: articleHashtagsError } = await supabase
-      .from('article_hashtags')
-      .select('article_id')
-      .eq('hashtag_id', hashtagData[0].id);
+    const { data: articleTags, error: articleTagsError } = await supabase
+      .from('news_tags')
+      .select('news_id')
+      .eq('tag_id', hashtagData[0].id);
     
-    if (articleHashtagsError || !articleHashtags || articleHashtags.length === 0) {
-      console.error('Error fetching article hashtags:', articleHashtagsError);
+    if (articleTagsError || !articleTags || articleTags.length === 0) {
+      console.error('Error fetching article tags:', articleTagsError);
       return [];
     }
     
     // Get the articles
-    const articleIds = articleHashtags.map(item => item.article_id);
+    const articleIds = articleTags.map(item => item.news_id);
     const { data: articles, error: articlesError } = await supabase
-      .from('articles')
+      .from('news_articles')
       .select(`
         id,
         title,
         summary,
         image_url,
         slug,
-        published_at,
-        views,
+        publish_date,
         category_id,
         categories(name)
       `)
       .in('id', articleIds)
-      .order('published_at', { ascending: false })
+      .order('publish_date', { ascending: false })
       .limit(limit);
     
     if (articlesError || !articles) {
@@ -209,7 +217,10 @@ export const fetchNewsByHashtag = async (hashtagSlug: string, limit: number = 10
       return [];
     }
     
-    return articles.map(transformArticleToNewsItem);
+    return articles.map(article => ({
+      ...transformArticleToNewsItem(article),
+      published_at: article.publish_date
+    }));
   } catch (error) {
     console.error('Error in fetchNewsByHashtag:', error);
     return [];

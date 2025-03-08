@@ -6,7 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface Hashtag {
   id: number;
   name: string;
-  slug: string;
+  slug?: string;
 }
 
 const HashtagScrollbar = () => {
@@ -17,15 +17,22 @@ const HashtagScrollbar = () => {
     async function fetchHashtags() {
       try {
         const { data, error } = await supabase
-          .from('hashtags')
-          .select('id, name, slug');
+          .from('tags')
+          .select('id, name');
         
         if (error) {
           console.error('Error fetching hashtags:', error);
           return;
         }
         
-        setHashtags(data || []);
+        // Transform the data to include a slug field
+        const transformedData = data.map(tag => ({
+          id: tag.id,
+          name: tag.name,
+          slug: tag.name.toLowerCase().replace(/\s+/g, '-')
+        }));
+        
+        setHashtags(transformedData || []);
       } catch (error) {
         console.error('Failed to fetch hashtags:', error);
       } finally {
@@ -54,7 +61,7 @@ const HashtagScrollbar = () => {
         {hashtags.map((hashtag) => (
           <Link 
             key={hashtag.id} 
-            to={`/search?hashtag=${hashtag.slug}`}
+            to={`/search?hashtag=${hashtag.slug || hashtag.name}`}
             className="flex-shrink-0 rounded-full bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200 transition-colors"
           >
             # {hashtag.name}

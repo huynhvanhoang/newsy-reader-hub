@@ -7,13 +7,21 @@ import NewsList from '@/components/NewsList';
 import { NewsItem } from '@/components/NewsCard';
 import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft } from 'lucide-react';
+import { transformArticleToNewsItem, formatTimestamp } from '@/services/newsService';
+
+interface CategoryData {
+  id: number;
+  name: string;
+  slug?: string;
+  image?: string;
+}
 
 const CategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const [isLoading, setIsLoading] = useState(true);
-  const [categoryData, setCategoryData] = useState<any | null>(null);
+  const [categoryData, setCategoryData] = useState<CategoryData | null>(null);
   const [filteredNews, setFilteredNews] = useState<NewsItem[]>([]);
-  const [relatedCategories, setRelatedCategories] = useState<any[]>([]);
+  const [relatedCategories, setRelatedCategories] = useState<CategoryData[]>([]);
   
   useEffect(() => {
     async function fetchCategoryData() {
@@ -21,76 +29,80 @@ const CategoryPage = () => {
       
       try {
         // Fetch the current category
-        const { data: category, error: categoryError } = await supabase
+        const { data: categoriesData, error: categoryError } = await supabase
           .from('categories')
-          .select('*')
-          .eq('slug', slug)
-          .single();
+          .select('id, name')
+          // Since we don't have slug in the table, we'll compare name
+          .ilike('name', `%${slug?.replace(/-/g, ' ')}%`)
+          .limit(1);
         
-        if (categoryError) {
+        if (categoryError || !categoriesData || categoriesData.length === 0) {
           console.error('Error fetching category:', categoryError);
           setCategoryData({
+            id: 0,
             name: 'Danh mục không tồn tại',
             image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
           });
           setFilteredNews([]);
+          setIsLoading(false);
           return;
         }
         
+        const category = {
+          ...categoriesData[0],
+          slug: categoriesData[0].name.toLowerCase().replace(/\s+/g, '-')
+        };
         setCategoryData(category);
         
         // Fetch articles for this category
-        const { data: articles, error: articlesError } = await supabase
-          .from('articles')
+        const { data: articlesData, error: articlesError } = await supabase
+          .from('news_articles')
           .select(`
             id,
             title,
             summary,
             image_url,
             slug,
-            published_at,
-            views,
+            publish_date,
             category_id,
             categories(name)
           `)
           .eq('category_id', category.id)
-          .order('published_at', { ascending: false });
+          .order('publish_date', { ascending: false });
         
         if (articlesError) {
           console.error('Error fetching articles:', articlesError);
           setFilteredNews([]);
-          return;
+        } else {
+          // Transform articles to match NewsItem interface
+          const transformedArticles: NewsItem[] = articlesData.map(article => ({
+            ...transformArticleToNewsItem(article),
+            published_at: article.publish_date
+          }));
+          
+          setFilteredNews(transformedArticles);
         }
         
-        // Transform articles to match NewsItem interface
-        const transformedArticles: NewsItem[] = articles.map(article => ({
-          id: article.id.toString(),
-          title: article.title,
-          summary: article.summary || '',
-          image: article.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
-          category: article.categories?.name || category.name,
-          source: 'Báo 24h',
-          timestamp: formatTimestamp(article.published_at),
-          slug: article.slug,
-          published_at: article.published_at
-        }));
-        
-        setFilteredNews(transformedArticles);
-        
         // Fetch related categories
-        const { data: relatedCats, error: relatedCatsError } = await supabase
+        const { data: relatedCatsData, error: relatedCatsError } = await supabase
           .from('categories')
-          .select('*')
+          .select('id, name')
           .neq('id', category.id)
           .limit(4);
         
         if (relatedCatsError) {
           console.error('Error fetching related categories:', relatedCatsError);
           setRelatedCategories([]);
-          return;
+        } else {
+          // Transform categories to include slug
+          const transformedCategories = relatedCatsData.map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            slug: cat.name.toLowerCase().replace(/\s+/g, '-'),
+            image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80'
+          }));
+          setRelatedCategories(transformedCategories);
         }
-        
-        setRelatedCategories(relatedCats);
       } catch (error) {
         console.error('Error in category page:', error);
       } finally {
@@ -103,21 +115,6 @@ const CategoryPage = () => {
     
     fetchCategoryData();
   }, [slug]);
-  
-  // Helper function to format timestamp
-  const formatTimestamp = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    if (diffHours < 24) {
-      return `${diffHours} giờ trước`;
-    } else {
-      const diffDays = Math.floor(diffHours / 24);
-      return `${diffDays} ngày trước`;
-    }
-  };
   
   if (isLoading || !categoryData) {
     return (

@@ -32,14 +32,21 @@ const HorizontalCategories = ({ categories: propCategories }: HorizontalCategori
         try {
           const { data, error } = await supabase
             .from('categories')
-            .select('id, name, slug, icon, color');
+            .select('id, name');
           
           if (error) {
             console.error('Error fetching categories:', error);
             return;
           }
           
-          setCategories(data || []);
+          // Transform the data to include a slug field
+          const transformedData = data.map(category => ({
+            id: category.id,
+            name: category.name,
+            slug: category.name.toLowerCase().replace(/\s+/g, '-')
+          }));
+          
+          setCategories(transformedData || []);
         } catch (error) {
           console.error('Failed to fetch categories:', error);
         } finally {
