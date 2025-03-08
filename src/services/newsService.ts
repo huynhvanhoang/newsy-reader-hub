@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { NewsItem } from '@/components/NewsCard';
 
@@ -217,5 +216,48 @@ export const fetchNewsByHashtag = async (hashtagSlug: string, limit: number = 10
   } catch (error) {
     console.error('Error in fetchNewsByHashtag:', error);
     return [];
+  }
+};
+
+// New function: Fetch article by slug
+export const fetchArticleBySlug = async (slug: string): Promise<NewsItem | null> => {
+  try {
+    console.log("Fetching article with slug:", slug);
+    
+    // Extract the base slug without extensions if any
+    const baseSlug = slug.split('.')[0];
+    
+    // First, try to find by exact slug match
+    const { data, error } = await supabase
+      .from('news_articles')
+      .select(`
+        id,
+        title,
+        summary,
+        content,
+        image_url,
+        url,
+        publish_date,
+        category_id,
+        categories(name)
+      `)
+      .or(`url.ilike.%${slug}%, url.ilike.%${baseSlug}%`)
+      .limit(1);
+    
+    if (error) {
+      console.error('Error fetching article by slug:', error);
+      return null;
+    }
+    
+    if (!data || data.length === 0) {
+      console.log("No article found with slug:", slug);
+      return null;
+    }
+    
+    console.log("Found article:", data[0]);
+    return transformArticleToNewsItem(data[0]);
+  } catch (error) {
+    console.error('Error in fetchArticleBySlug:', error);
+    return null;
   }
 };

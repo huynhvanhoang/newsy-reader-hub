@@ -5,30 +5,41 @@ import { ArrowLeft, Clock, Share2, Bookmark, Heart } from 'lucide-react';
 import Header from '@/components/Header';
 import Navbar from '@/components/Navbar';
 import NewsList from '@/components/NewsList';
-import { newsData, analyticNews } from '@/data/newsData';
+import { analyticNews } from '@/data/newsData';
 import { cn } from '@/lib/utils';
+import { fetchArticleBySlug } from '@/services/newsService';
+import { NewsItem } from '@/components/NewsCard';
 
 const ArticlePage = () => {
-  const { id } = useParams<{ id: string }>();
-  const [article, setArticle] = useState<any>(null);
+  const { slug } = useParams<{ slug: string }>();
+  const [article, setArticle] = useState<NewsItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   
   useEffect(() => {
-    // Simulate fetching article data
-    setIsLoading(true);
-    const foundArticle = newsData.find(item => item.id === id);
+    async function loadArticle() {
+      if (!slug) return;
+      
+      setIsLoading(true);
+      console.log("Loading article with slug:", slug);
+      
+      try {
+        const articleData = await fetchArticleBySlug(slug);
+        console.log("Article data:", articleData);
+        setArticle(articleData);
+      } catch (error) {
+        console.error("Error loading article:", error);
+        setArticle(null);
+      } finally {
+        setIsLoading(false);
+      }
+    }
     
-    // Simulate loading time
-    setTimeout(() => {
-      setArticle(foundArticle || null);
-      setIsLoading(false);
-    }, 500);
-    
+    loadArticle();
     // Scroll to top when article changes
     window.scrollTo(0, 0);
-  }, [id]);
+  }, [slug]);
   
   if (isLoading) {
     return (
@@ -164,7 +175,7 @@ const ArticlePage = () => {
         <section className="mt-8">
           <h2 className="mb-4 text-xl font-bold">Tin liên quan</h2>
           <NewsList 
-            items={analyticNews.filter(item => item.id !== id).slice(0, 3)} 
+            items={analyticNews.filter(item => item.id !== article.id).slice(0, 3)} 
             variant="default" 
             columnLayout="single"
           />
