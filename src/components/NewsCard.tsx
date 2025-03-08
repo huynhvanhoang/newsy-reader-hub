@@ -9,6 +9,7 @@ export interface NewsItem {
   id: string | number;
   title: string;
   summary?: string;
+  content?: string;
   image_url?: string;
   slug: string;
   published_at: string;

@@ -41,6 +41,18 @@ const ArticlePage = () => {
     window.scrollTo(0, 0);
   }, [slug]);
   
+  // Function to safely render HTML content with embedded media
+  const renderContent = (content: string | undefined) => {
+    if (!content) return null;
+    
+    return (
+      <div 
+        className="article-content" 
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  };
+  
   if (isLoading) {
     return (
       <div className="min-h-screen bg-newsapp-background">
@@ -154,20 +166,25 @@ const ArticlePage = () => {
           {/* Article content */}
           <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-p:text-gray-700">
             <p className="mb-4 text-lg font-medium text-gray-800">
-              {article.summary || "Nội dung chi tiết của bài viết sẽ được hiển thị ở đây. Đang trong quá trình phát triển..."}
+              {article.summary || "Nội dung chi tiết của bài viết sẽ được hiển thị ở đây."}
             </p>
             
-            <p>
-              Theo đó, quyết định số 01/QĐ-BNN-TCCB ngày 16/1/2024 của bộ Nông nghiệp và Phát triển nông thôn (PTNT) phê duyệt quy hoạch các chức danh lãnh đạo cấp phòng thuộc Cục Chăn nuôi chỉ rõ: Bà Nguyễn Thị Thúy Hiền, phó trưởng phòng Thanh tra - Pháp chế, được quy hoạch ở 2 vị trí là trưởng phòng Thanh tra - Pháp chế và trưởng phòng Kế hoạch - Tài chính.
-            </p>
-            
-            <p>
-              Quy hoạch này là giai đoạn 2021-2026, định hướng đến năm 2031. Đây là cán bộ nữ duy nhất được quy hoạch 2 vị trí trong số 29 vị trí quy hoạch cán bộ của Cục Chăn nuôi.
-            </p>
-            
-            <p>
-              Đáng chú ý, quyết định số 01 cũng quy hoạch ông Nguyễn Xuân Dương, cục trưởng Cục Chăn nuôi, vào vị trí trưởng phòng Tổ chức cán bộ; quy hoạch ông Nguyễn Văn Trọng, phó cục trưởng, vào vị trí trưởng phòng Kế hoạch - Tài chính.
-            </p>
+            {/* Render the HTML content with media */}
+            {renderContent(article.content) || (
+              <>
+                <p>
+                  Theo đó, quyết định số 01/QĐ-BNN-TCCB ngày 16/1/2024 của bộ Nông nghiệp và Phát triển nông thôn (PTNT) phê duyệt quy hoạch các chức danh lãnh đạo cấp phòng thuộc Cục Chăn nuôi chỉ rõ: Bà Nguyễn Thị Thúy Hiền, phó trưởng phòng Thanh tra - Pháp chế, được quy hoạch ở 2 vị trí là trưởng phòng Thanh tra - Pháp chế và trưởng phòng Kế hoạch - Tài chính.
+                </p>
+                
+                <p>
+                  Quy hoạch này là giai đoạn 2021-2026, định hướng đến năm 2031. Đây là cán bộ nữ duy nhất được quy hoạch 2 vị trí trong số 29 vị trí quy hoạch cán bộ của Cục Chăn nuôi.
+                </p>
+                
+                <p>
+                  Đáng chú ý, quyết định số 01 cũng quy hoạch ông Nguyễn Xuân Dương, cục trưởng Cục Chăn nuôi, vào vị trí trưởng phòng Tổ chức cán bộ; quy hoạch ông Nguyễn Văn Trọng, phó cục trưởng, vào vị trí trưởng phòng Kế hoạch - Tài chính.
+                </p>
+              </>
+            )}
           </div>
         </article>
         

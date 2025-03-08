@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { NewsItem } from '@/components/NewsCard';
 
@@ -7,6 +8,7 @@ export const transformArticleToNewsItem = (article: any): NewsItem => {
     id: article.id.toString(),
     title: article.title,
     summary: article.summary || '',
+    content: article.content || '',
     image: article.image_url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
     category: article.categories?.name || 'Tin tức',
     source: 'Báo 24h',
